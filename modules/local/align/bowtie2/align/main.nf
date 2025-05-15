@@ -10,7 +10,7 @@ process BOWTIE2_ALIGN {
     script:
 		    """
 		    bowtie2 \\
-		        -x genome.bt2/genome \\
+		        -x genome.bt2/index \\
 		        -U reads.fastq.gz \\
 		        --threads ${task.cpus} \\
 		        ${task.ext.args?:''} \\
