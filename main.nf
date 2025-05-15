@@ -2,9 +2,12 @@
 
 nextflow.preview.output = true
 
-include { BOWTIE2_BUILD } from './modules/local/bowtie2/build'
-include { BOWTIE2_ALIGN } from './modules/local/bowtie2/align'
-include { SAMTOOLS_INDEX } from './modules/local/samtools/index'
+include { BOWTIE2_BUILD     } from './modules/local/bowtie2/build'
+include { BOWTIE2_ALIGN     } from './modules/local/bowtie2/align'
+include { SAMTOOLS_INDEX    } from './modules/local/samtools/index'
+include { SAMTOOLS_FLAGSTAT } from './modules/local/samtools/flagstat'
+include { FASTQC            } from './modules/local/fastqc'
+include { SEQTK_FQCHK       } from './modules/local/seqtk/fqchk'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 
 workflow {
@@ -21,31 +24,52 @@ workflow {
 			bwt2_idx_ch = ref_genomes_ch
 				.map({x -> [x[0],x[0].fasta]})
 				| BOWTIE2_BUILD
-				
-			// Combine FQ with correponding genome
+
+			// Input reads QC
+			SEQTK_FQCHK(ss_ch)
+			FASTQC(ss_ch)
+
+
+			// Map reads on corresponding genome
 			bam_ch = ss_ch
+				// first: join on genome
 				.map({x -> [x[0].ref_id,x]})
 				.join(bwt2_idx_ch.map({x -> [x[0].ref_id,x[1]]}))
+				// second: retreive index for mapping
 				.map({ref_id,fq,bt2 -> [fq[0],fq[1],bt2]})
 				| BOWTIE2_ALIGN
 			
 			// Index BAM files
 			SAMTOOLS_INDEX(bam_ch)
-
+			SAMTOOLS_FLAGSTAT(bam_ch)
 
 	publish:
-	    bwt2_idx_ch >> 'bowtie2_index'
 			bam_ch >> 'bam'
 			SAMTOOLS_INDEX.out >> 'bai'
+			SAMTOOLS_FLAGSTAT.out >> 'flagstat'
+			SEQTK_FQCHK.out >> 'fqchk'
+			FASTQC.out.html >> 'fastqc'
 }
 
 output {
 	bam {
-		path({x -> {filename -> "samples/${x[0].ref_id}/${x[0].sample_id}.bam"}})
+		path({x -> {filename -> "samples/${x[0].sample_id}/${x[0].ref_id}.bam"}})
 		mode 'copy'
 	}
 	bai {
-		path({x -> {filename -> "samples/${x[0].ref_id}/${x[0].sample_id}.bam.bai"}})
+		path({x -> {filename -> "samples/${x[0].sample_id}/${x[0].ref_id}.bam.bai"}})
+		mode 'copy'
+	}
+	flagstat {
+		path({x -> {filename -> "samples/${x[0].sample_id}/${x[0].ref_id}.bam.flagstat"}})
+		mode 'copy'
+	}
+	fastqc {
+		path({x -> {filename -> "samples/${x[0].sample_id}/fastqc.html"}})
+		mode 'copy'
+	}
+	fqchk {
+		path({x -> {filename -> "samples/${x[0].sample_id}/seqtk.fqchk"}})
 		mode 'copy'
 	}	
 }
