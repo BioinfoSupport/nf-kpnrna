@@ -9,73 +9,48 @@ include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin
 
 workflow {
 	main:
-			// -------------------------------------------
-			//	Input sample sheet and reference genomes
-			// -------------------------------------------
-			ref_genomes_ch = Channel.fromList([
-				[id: 'MH258', fasta: 'data/ref/Kpn_MH258/Kpn_MH258.fasta', gff: ''],
-				[id: 'ATCC43816', fasta: 'data/ref/ATCC43816/ncbi_dataset/data/GCA_016071735.1/GCA_016071735.1_ASM1607173v1_genomic.fna', gff:'']
-			])
-/*
-			ss = Channel.fromList([
-				[id:'A', ref_id:'ATCC43816' ,read1:'data/fq/HF_diet_ATCC43816/HFD_ATCC_1_S113_L003_R1_001.fastq.gz'],
-				[id:'B', ref_id:'MH258' ,read1:'data/fq/HF_diet_ST258/HFD_MH258_2_S110_L003_R1_001.fastq.gz']
-			])
-*/
-
-
-
-			// Validate parameters and print summary of supplied ones
+			// Validate parameters, print summary
 			validateParameters()
 			log.info(paramsSummaryLog(workflow))
-
-			ss_ch = Channel.fromList(samplesheetToList(params.samplesheet, "assets/schema_input.json"))
-					.view()
-
-			bwt2_idx_ch = Channel.empty()
-			bam_ch = Channel.empty()
-			bai_ch = Channel.empty()
 			
-/*
+			// Load sample-sheet and reference-genomes
+			ss_ch = Channel.fromList(samplesheetToList(params.samplesheet, "assets/schema_samplesheet.json"))
+			ref_genomes_ch = Channel.fromList(samplesheetToList(params.refgenomes, "assets/schema_refgenomes.json"))
+
 			// Index all reference genomes
 			bwt2_idx_ch = ref_genomes_ch
-				.map({x -> [x,file(x.fasta)]})
+				.map({x -> [x[0],x[0].fasta]})
 				| BOWTIE2_BUILD
-	
+				
 			// Combine FQ with correponding genome
-			ref_fq_ch = bwt2_idx_ch
-				.map({x -> [x[0].id,x]})
-				.combine(ss.map({x -> [x.ref_id,x]}),by:0)
-				.multiMap({ref_id,ref,x ->
-					fq: [x,file(x.read1)]
-					ref: ref
-				})
-			bam_ch = BOWTIE2_ALIGN(ref_fq_ch.fq,ref_fq_ch.ref)
+			bam_ch = ss_ch
+				.map({x -> [x[0].ref_id,x]})
+				.join(bwt2_idx_ch.map({x -> [x[0].ref_id,x[1]]}))
+				.map({ref_id,fq,bt2 -> [fq[0],fq[1],bt2]})
+				| BOWTIE2_ALIGN
 			
 			// Index BAM files
-			bai_ch = bam_ch
-			  .map({meta,meta2,bam -> [meta,bam]})
-				| SAMTOOLS_INDEX
-*/
+			SAMTOOLS_INDEX(bam_ch)
+
 
 	publish:
 	    bwt2_idx_ch >> 'bowtie2_index'
 			bam_ch >> 'bam'
-			bai_ch >> 'bai'
+			SAMTOOLS_INDEX.out >> 'bai'
 }
 
 
 output {
 	bowtie2_index {
-		path({x -> {filename -> "ref/bowtie/${x[0].id}"}})
+		path({x -> {filename -> "ref/bowtie/${x[0].ref_id}"}})
 		mode 'copy'
 	}
 	bam {
-		path({x -> {filename -> "samples/${x[0].ref_id}/${x[0].id}.bam"}})
+		path({x -> {filename -> "samples/${x[0].ref_id}/${x[0].sample_id}.bam"}})
 		mode 'copy'
 	}
 	bai {
-		path({x -> {filename -> "samples/${x[0].ref_id}/${x[0].id}.bam.bai"}})
+		path({x -> {filename -> "samples/${x[0].ref_id}/${x[0].sample_id}.bam.bai"}})
 		mode 'copy'
 	}	
 }

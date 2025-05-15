@@ -6,23 +6,22 @@
   "type": "array",
   "items": {
     "type": "object",
-    "required": ["sample", "genome", "fastq_1"],
+    "required": ["sample_id", "ref_id", "fastq_1"],
     "properties": {
-      "sample": {
+      "sample_id": {
         "type": "string",
         "pattern": "^\\S+$",
         "errorMessage": "Sample name must be provided and cannot contain spaces",
-        "meta": ["id"]
+        "meta": ["sample_id"]
       },
-      "genome": {
+      "ref_id": {
         "type": "string",
-        "enum": ["MH258","ATCC43816"],
         "errorMessage": "Wrong genome provided",
-        "meta": ["genome"]
+        "meta": ["ref_id"]
       },
       "fastq_1": {
         "type": "string",
-        "pattern": "^\\S+\\.fastq\\.gz$",
+        "pattern": "^\\S+\\.(fastq|fq)\\.gz$",
         "format": "file-path",
         "errorMessage": "Wrong fastq_1 path provided (cannot contain spaces and must end with .fastq.gz)"
       }

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/nf-core/rnaseq/master/assets/schema_input.json",
+  "title": "Reference genome sheet schema",
+  "description": "Schema for the CSV file provided with params.refgenomes",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["ref_id", "fasta"],
+    "properties": {
+      "ref_id": {
+        "type": "string",
+        "pattern": "^\\S+$",
+        "errorMessage": "Genome name must be provided and cannot contain spaces",
+        "meta": ["ref_id"]
+      },
+      "fasta": {
+        "type": "string",
+        "pattern": "^\\S+\\.(fasta|fna|fa)$",
+        "format": "file-path",
+        "errorMessage": "Wrong FASTA path provided (cannot contain spaces, and must have extension .fasta, .fna or .fa)",
+        "meta": ["fasta"]
+      },
+      "gff": {
+        "type": "string",
+        "pattern": "^\\S+\\.gff$",
+        "format": "file-path",
+        "errorMessage": "Wrong gff path provided (cannot contain spaces and must end with .gff)",
+        "meta": ["gff"]
+      }
+    }
+  }
+}

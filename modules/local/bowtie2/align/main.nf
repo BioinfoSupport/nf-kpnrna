@@ -6,7 +6,7 @@ process BOWTIE2_ALIGN {
     input:
     		tuple val(meta), path('reads.fastq.gz'), path('genome.bwt2')
     output:
-    		tuple val(meta), path("*.bam"), emit: bam
+    		tuple val(meta), path("*.bam")
     script:
 		    """
 		    bowtie2 \\

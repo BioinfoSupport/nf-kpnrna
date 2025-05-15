@@ -5,9 +5,13 @@
 	    "pipeline_params": { 
 	      "title": "Pipeline parameters",
 	      "type": "object",
-	      "required": ["samplesheet"], 
+	      "required": ["samplesheet","refgenomes"], 
 	      "properties": { 
 	        "samplesheet": { 
+	          "type": "string",
+	          "format": "file-path"
+	        },
+	        "refgenomes": { 
 	          "type": "string",
 	          "format": "file-path"
 	        }
