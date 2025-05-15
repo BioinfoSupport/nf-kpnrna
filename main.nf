@@ -2,12 +2,12 @@
 
 nextflow.preview.output = true
 
-include { BOWTIE2_BUILD     } from './modules/local/bowtie2/build'
-include { BOWTIE2_ALIGN     } from './modules/local/bowtie2/align'
+include { BOWTIE2_BUILD     } from './modules/local/align/bowtie2/build'
+include { BOWTIE2_ALIGN     } from './modules/local/align/bowtie2/align'
 include { SAMTOOLS_INDEX    } from './modules/local/samtools/index'
 include { SAMTOOLS_FLAGSTAT } from './modules/local/samtools/flagstat'
-include { FASTQC            } from './modules/local/fastqc'
-include { SEQTK_FQCHK       } from './modules/local/seqtk/fqchk'
+include { FASTQC            } from './modules/local/fastq/fastqc'
+include { SEQTK_FQCHK       } from './modules/local/fastq/seqtk/fqchk'
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 
 workflow {
