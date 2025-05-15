@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+	"$defs": { 
+	    "pipeline_params": { 
+	      "title": "Pipeline parameters",
+	      "type": "object",
+	      "required": ["samplesheet"], 
+	      "properties": { 
+	        "samplesheet": { 
+	          "type": "string",
+	          "format": "file-path"
+	        }
+	      }
+	    }
+	  },
+  "allOf": [
+    { "$ref": "#/$defs/pipeline_params" } 
+  ]
+}
+
