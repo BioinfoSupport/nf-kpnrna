@@ -8,7 +8,6 @@ process CUTADAPT {
     output:
     		tuple val(meta), path("cutadapt.fastq.gz"), emit: fastq
 		    tuple val(meta), path("cutadapt.json"), emit: json
-		    tuple val(meta), path("cutadapt_long.fastq.gz"), emit: long_fastq
 		    tuple val(meta), path("cutadapt_short.fastq.gz"), emit: short_fastq
 		    tuple val(meta), path("cutadapt.txt"), emit: txt
     script:
@@ -16,9 +15,11 @@ process CUTADAPT {
 		    	cutadapt --cores ${task.cpus} \\
 		    	  ${task.ext.args?:'--adapter=AGATCGGAAGAGC --poly-a'} \\
 	  				-o 'cutadapt.fastq.gz' \\
-	  				--json='cutadapt.json' 'reads.fastq.gz' \\
-	  				--too-short-output 'cutadapt_short.fastq.gz' \\
-	  				--too-long-output 'cutadapt_long.fastq.gz' \\
+	  				--json='cutadapt.json' \\
+	  				--cores ${task.cpus} \\
+	  				--minimum-length=20 \\
+	  				--too-short-output='cutadapt_short.fastq.gz' \\
+	  				'reads.fastq.gz' \\
 	  			> 'cutadapt.txt'
 		    """
 }

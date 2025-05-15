@@ -1,0 +1,56 @@
+#!/usr/bin/env Rscript
+
+
+#-#-#-#-#-#-#-#-#-#-#-#-#
+# Argument parsing
+#-#-#-#-#-#-#-#-#-#-#-#-#
+library(optparse)
+
+option_list <- list( 
+	make_option("--output",help="Name of the BigWig file to generate [default: %default]",type="character",default = "output.bw"),
+	make_option("--resize",help="Resize all reads to the given length [default: %default]",type="integer",default = 0),
+	make_option("--thread",help="Number of thread [default: %default]",type="integer",default = 4),
+	make_option("--strand",help="Which strand to quantify (+,-,*) [default: %default]",type="character",default = "*"),
+	make_option("--yield-size",help="Batch size (Number of read to load at each iteration, decrease to reduce memory footprint) [default: %default]",type="integer",default = 5e6)
+)
+opt <- parse_args(OptionParser(
+	option_list = option_list,
+	usage = "usage: %prog --output <output.bw> <bam-file>",
+	description = "Extract (stranded) read coverage for each position of the given BAM file.
+	Generate a BigWig file with read-coverage at all genomic positions."
+	),positional_arguments = 1)
+#opt <- list(args="data/fastq/test/sample1-1_100k.Mm.ht2.bam",options=list(out="cov.bed"))
+
+#-#-#-#-#-#-#-#-#-#-#-#-#
+# Methods definitions
+#-#-#-#-#-#-#-#-#-#-#-#-#
+suppressPackageStartupMessages({
+	BiocParallel::register(BiocParallel::MulticoreParam(workers=opt$options$thread))
+	library(GenomicAlignments)
+})
+
+
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
+# Main
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
+bam <- BamFile(opt$args,yieldSize = opt$options$"yield-size",asMates = FALSE)
+
+MAPFUN <- if (opt$options$resize>0) {
+	\(x) coverage(resize(granges(x),width = opt$options$resize,fix = "start"))
+} else {
+	\(x) coverage(granges(x))	
+}
+
+BAMFLAG <- switch(
+	opt$options$strand,
+	"*" = scanBamFlag(isMinusStrand = NA),
+	"+" = scanBamFlag(isMinusStrand = FALSE),
+	"-" = scanBamFlag(isMinusStrand = TRUE)
+)
+
+cov <- GenomicFiles::reduceByYield(bam,MAP = MAPFUN,
+	YIELD = \(x) readGAlignments(x,param = ScanBamParam(flag=BAMFLAG))
+) 
+rtracklayer::export.bw(cov,opt$options$output)
+
+

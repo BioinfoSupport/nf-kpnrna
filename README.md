@@ -24,3 +24,9 @@ nextflow run . -resume
 ```
 
 
+# TODO
+ - Add read trimming step to uniformize lengths
+ - Change the pipeline to take as input one genome folder, and run it for each genome
+ - Create a pipeline to prepare genomes ?
+ 
+ 
