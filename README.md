@@ -2,12 +2,10 @@
 Nextflow pipeline for Kpn RNA-seq
 
 
-
-
 # Usage
 
 ```bash
-./nextflow run -r main BioinfoSupport/nf-amr -profile hpc -resume
+./nextflow run -r main BioinfoSupport/nf-kpnrna -profile hpc -resume
 ```
 
 ## Docker 

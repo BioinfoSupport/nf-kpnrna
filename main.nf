@@ -4,6 +4,8 @@ nextflow.preview.output = true
 
 include { BOWTIE2_BUILD     } from './modules/local/align/bowtie2/build'
 include { BOWTIE2_ALIGN     } from './modules/local/align/bowtie2/align'
+include { HISAT2_BUILD     } from './modules/local/align/hisat2/build'
+include { HISAT2_ALIGN     } from './modules/local/align/hisat2/align'
 include { SAMTOOLS_INDEX    } from './modules/local/samtools/index'
 include { SAMTOOLS_FLAGSTAT } from './modules/local/samtools/flagstat'
 include { FASTQC            } from './modules/local/fastq/fastqc'
@@ -21,9 +23,13 @@ workflow {
 			ref_genomes_ch = Channel.fromList(samplesheetToList(params.refgenomes, "assets/schema_refgenomes.json"))
 
 			// Index all reference genomes
-			bwt2_idx_ch = ref_genomes_ch
+			ref_idx_ch = ref_genomes_ch
 				.map({x -> [x[0],x[0].fasta]})
 				| BOWTIE2_BUILD
+
+			ref_genomes_ch
+				.map({x -> [x[0],x[0].fasta]})
+				| HISAT2_BUILD
 
 			// Input reads QC
 			SEQTK_FQCHK(ss_ch)
@@ -34,7 +40,7 @@ workflow {
 			bam_ch = ss_ch
 				// first: join on genome
 				.map({x -> [x[0].ref_id,x]})
-				.join(bwt2_idx_ch.map({x -> [x[0].ref_id,x[1]]}))
+				.join(ref_idx_ch.map({x -> [x[0].ref_id,x[1]]}))
 				// second: retreive index for mapping
 				.map({ref_id,fq,bt2 -> [fq[0],fq[1],bt2]})
 				| BOWTIE2_ALIGN

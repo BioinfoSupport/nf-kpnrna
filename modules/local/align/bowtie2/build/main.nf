@@ -6,9 +6,10 @@ process BOWTIE2_BUILD {
     input:
     		tuple val(meta), path('genome.fasta')
     output:
-    		tuple val(meta), path('bowtie2',type: 'dir')
+    		tuple val(meta), path('bt2_index',type: 'dir')
     script:
 		    """
-		    mkdir bowtie2;bowtie2-build ${task.ext.args?:''} --threads $task.cpus genome.fasta bowtie2/genome
+		    mkdir bt2_index
+		    bowtie2-build ${task.ext.args?:''} --threads $task.cpus genome.fasta bt2_index/index
 		    """
 }
