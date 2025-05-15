@@ -7,20 +7,18 @@ process HISAT2_ALIGN {
     		tuple val(meta), path('reads.fastq.gz'), path('genome.ht2')
     output:
     		tuple val(meta), path("output.bam"), emit: bam
-    		tuple val(meta), path("splicesite.txt"), emit: splicesite
+    		tuple val(meta), path("new_splicesite.txt"), emit: new_splicesite
     		tuple val(meta), path("stats.txt"), emit: stats
     script:
 		    """
 						hisat2 \\
-								${task.ext.args?:''} \\
+								${task.ext.args?:'--omit-sec-seq --no-spliced-alignment'} \\
 						    -p ${task.cpus} --time \\
 						    --new-summary --summary-file "stats.txt" \\
-						    --novel-splicesite-outfile "splicesite.txt" \\
-						    --omit-sec-seq \\
+						    --novel-splicesite-outfile "new_splicesite.txt" \\
 						    -x 'genome.ht2/index' \\
 						    -U reads.fastq.gz \\
 						| samtools sort --threads ${task.cpus} -o output.bam -
 		    """
 }
 
-	
