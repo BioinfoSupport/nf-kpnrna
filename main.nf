@@ -39,12 +39,7 @@ workflow {
 			SAMTOOLS_INDEX.out >> 'bai'
 }
 
-
 output {
-	bowtie2_index {
-		path({x -> {filename -> "ref/bowtie/${x[0].ref_id}"}})
-		mode 'copy'
-	}
 	bam {
 		path({x -> {filename -> "samples/${x[0].ref_id}/${x[0].sample_id}.bam"}})
 		mode 'copy'
